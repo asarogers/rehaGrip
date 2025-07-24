@@ -1,0 +1,22 @@
+feedback
+- if the thumbholster restricts some angles that is fine
+- use the motor counts to display the angle
+
+TODOs:
+today
+- setup a react application GUI with node backend
+
+friday
+- control raspberry pi via GUI
+
+monday
+- solder raspberry pi
+- redesign load cell holder
+
+teusday
+- decide where to put the raspberry pi at the other lab
+- cable management
+
+done
+- send mockup of GUI
+- check if there is a tension and compression loads cell at the lab

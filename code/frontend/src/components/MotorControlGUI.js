@@ -10,7 +10,7 @@ import {
   Hand
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:3001/api/motor';  // ← change this to your real backend
+const API_BASE = 'http://localhost:3001/api/motor';
 
 export default function MotorControlGUI() {
   const [targetPosition, setTargetPosition] = useState(0);
@@ -23,7 +23,9 @@ export default function MotorControlGUI() {
   const [emergencyStop, setEmergencyStop] = useState(false);
   const [handSelection, setHandSelection] = useState('right');
   const [statusMessages, setStatusMessages] = useState([]);
+  const [lastVersion, setLastVersion] = useState(0);
   const logRef = useRef(null);
+  const pollIntervalRef = useRef(null);
 
   // helper to push to log
   const addStatusMessage = (message) => {
@@ -42,26 +44,72 @@ export default function MotorControlGUI() {
       if (!res.ok) throw new Error(await res.text());
       return await res.json();
     } catch (err) {
-      addStatusMessage(` ${path} error: ${err.message}`);
+      addStatusMessage(`❌ ${path} error: ${err.message}`);
       console.error(path, err);
       throw err;
     }
   };
 
-  // fetch live status every 200ms
-  useEffect(() => {
-    const iv = setInterval(async () => {
-      try {
-        const status = await post('status', {});
+  // Optimized status checking with version tracking
+  const checkStatus = async () => {
+    try {
+      const status = await post('status', { last_version: lastVersion });
+      
+      if (status.changed) {
+        // Only update state when something actually changed
         setCurrentPosition(status.position);
         setLoadReading(status.load);
         setIsMoving(status.moving);
         setIsLocked(status.locked);
         setTorqueEnabled(status.torque);
         setEmergencyStop(status.emergency);
-      } catch {}
-    }, 200);
-    return () => clearInterval(iv);
+        setLastVersion(status.version);
+        
+        // Adjust polling frequency based on motor state
+        if (status.moving && !pollIntervalRef.current?.fast) {
+          startFastPolling();
+        } else if (!status.moving && pollIntervalRef.current?.fast) {
+          startSlowPolling();
+        }
+      }
+    } catch (err) {
+      // Silent fail for status checks to avoid spam
+      console.error('Status check failed:', err);
+    }
+  };
+
+  // Fast polling when motor is moving (100ms)
+  const startFastPolling = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current.id);
+    }
+    pollIntervalRef.current = {
+      id: setInterval(checkStatus, 100),
+      fast: true
+    };
+  };
+
+  // Slow polling when motor is idle (1000ms)
+  const startSlowPolling = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current.id);
+    }
+    pollIntervalRef.current = {
+      id: setInterval(checkStatus, 10000),
+      fast: false
+    };
+  };
+
+  // Initial status check and start polling
+  useEffect(() => {
+    checkStatus(); // Get initial state
+    startSlowPolling(); // Start with slow polling
+    
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current.id);
+      }
+    };
   }, []);
 
   // auto-scroll log
@@ -72,21 +120,27 @@ export default function MotorControlGUI() {
   // Hand selection
   const handleHandSelection = async (hand) => {
     setHandSelection(hand);
-    addStatusMessage(`Switching to ${hand} hand…`);
-    await post('hand', { hand });
-    addStatusMessage(`✅ Hand set to ${hand}`);
+    addStatusMessage(`🔄 Switching to ${hand} hand…`);
+    try {
+      await post('hand', { hand });
+      addStatusMessage(`✅ Hand set to ${hand}`);
+      // Force status update after hand change
+      setTimeout(checkStatus, 100);
+    } catch {}
   };
 
   // Move to target
   const moveToPosition = async () => {
-    if (emergencyStop)       return addStatusMessage("Emergency stop engaged");
-    if (!torqueEnabled)      return addStatusMessage("Torque disabled");
-    if (isLocked)            return addStatusMessage("Motor locked");
+    if (emergencyStop)       return addStatusMessage("❌ Emergency stop engaged");
+    if (!torqueEnabled)      return addStatusMessage("❌ Torque disabled");
+    if (isLocked)            return addStatusMessage("❌ Motor locked");
 
-    addStatusMessage(`Sending move → ${targetPosition}°`);
+    addStatusMessage(`🎯 Moving to ${targetPosition}°`);
     try {
       await post('move', { position: targetPosition, hand: handSelection, velocity });
-      addStatusMessage('Move command accepted');
+      addStatusMessage('✅ Move command sent');
+      // Switch to fast polling since motor will start moving
+      startFastPolling();
     } catch {}
   };
 
@@ -94,46 +148,60 @@ export default function MotorControlGUI() {
   const adjustTarget = async (delta) => {
     const newPos = Math.max(-360, Math.min(360, targetPosition + delta));
     setTargetPosition(newPos);
-    addStatusMessage(`Target → ${newPos}°`);
+    addStatusMessage(`🎯 Target → ${newPos}°`);
     try {
       await post('move', { position: newPos, hand: handSelection, velocity });
-      addStatusMessage('Move command accepted');
+      addStatusMessage('✅ Move command sent');
+      startFastPolling();
     } catch {}
   };
 
   // Presets
   const setPresetPosition = (pos, name) => {
     setTargetPosition(pos);
-    addStatusMessage(`Preset: ${name} (${pos}°)`);
+    addStatusMessage(`📍 Preset: ${name} (${pos}°)`);
     post('move', { position: pos, hand: handSelection, velocity })
-      .then(() => addStatusMessage('Move command accepted'))
+      .then(() => {
+        addStatusMessage('✅ Move command sent');
+        startFastPolling();
+      })
       .catch(() => {});
   };
 
   // Lock toggle
   const toggleLock = async () => {
     const next = !isLocked;
-    addStatusMessage(next ? 'Locking…' : 'Unlocking…');
-    await post('lock', { locked: next, hand: handSelection });
-    setIsLocked(next);
-    addStatusMessage(next ? 'Locked' : 'Unlocked');
+    addStatusMessage(next ? '🔒 Locking…' : '🔓 Unlocking…');
+    try {
+      await post('lock', { locked: next, hand: handSelection });
+      addStatusMessage(next ? '🔒 Locked' : '🔓 Unlocked');
+      setTimeout(checkStatus, 100);
+    } catch {}
   };
 
   // Torque toggle
   const toggleTorque = async () => {
     const next = !torqueEnabled;
-    addStatusMessage(next ? 'Enabling torque…' : 'Disabling torque…');
-    await post('torque', { torque: next, hand: handSelection });
-    setTorqueEnabled(next);
-    addStatusMessage(next ? 'Torque Enabled' : 'Torque Disabled');
+    addStatusMessage(next ? '⚡ Enabling torque…' : '💤 Disabling torque…');
+    try {
+      await post('torque', { torque: next, hand: handSelection });
+      addStatusMessage(next ? '⚡ Torque Enabled' : '💤 Torque Disabled');
+      setTimeout(checkStatus, 100);
+    } catch {}
   };
 
   // Emergency Stop
   const handleEmergencyStop = async () => {
     const next = !emergencyStop;
-    addStatusMessage(next ? 'Emergency STOP!' : 'Releasing STOP');
-    await post('emergency', { stop: next, hand: handSelection });
-    setEmergencyStop(next);
+    addStatusMessage(next ? '🚨 EMERGENCY STOP!' : '▶️ Releasing STOP');
+    try {
+      await post('emergency', { stop: next, hand: handSelection });
+      setTimeout(checkStatus, 100);
+      // Emergency stop should immediately go to slow polling
+      if (next) {
+        startSlowPolling();
+      }
+    } catch {}
   };
 
   return (
@@ -145,6 +213,17 @@ export default function MotorControlGUI() {
         fontSize: 28, fontWeight: 700, color: '#1e293b',
         textAlign: 'center', marginBottom: 24
       }}>Motor Control System</h1>
+
+      {/* Polling indicator */}
+      <div style={{
+        position: 'fixed', top: 10, right: 10,
+        padding: '4px 8px', borderRadius: 4,
+        background: pollIntervalRef.current?.fast ? '#22c55e' : '#6b7280',
+        color: 'white', fontSize: 12, fontWeight: 500,
+        zIndex: 1000
+      }}>
+        {pollIntervalRef.current?.fast ? 'Fast Poll' : 'Slow Poll'}
+      </div>
 
       {/* Hand Selection */}
       <div style={{
@@ -468,6 +547,9 @@ export default function MotorControlGUI() {
                 marginTop:8
               }}>
                 Status: {emergencyStop?'STOPPED':'OPERATIONAL'}
+              </div>
+              <div style={{ fontSize:12, color:'#6b7280', marginTop:8 }}>
+                Poll Rate: {pollIntervalRef.current?.fast ? '100ms' : '1000ms'}
               </div>
             </div>
           </div>

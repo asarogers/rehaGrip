@@ -20,7 +20,7 @@
   },
   "scripts": {
     "start:frontend": "react-scripts start",
-    "start:backend": "node ../backend/server.js",
+    "start:backend": "python3 ../backend/server.py",
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "build": "react-scripts build",
     "test": "react-scripts test",

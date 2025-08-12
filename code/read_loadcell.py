@@ -135,6 +135,40 @@ class HX711:
         weight_kg = self.get_weight(times)
         return weight_kg * 9.81
     
+    def get_force_analysis(self, times=5):
+        """
+        Get comprehensive force analysis with compression/tension breakdown
+        Returns: dict with force measurements and analysis
+        """
+        weight_kg = self.get_weight(times)
+        force_n = weight_kg * 9.81
+        
+        # Determine force type and magnitude
+        if weight_kg > 0.05:  # Threshold to avoid noise
+            force_type = "COMPRESSION"
+            force_magnitude = abs(weight_kg)
+            force_magnitude_n = abs(force_n)
+        elif weight_kg < -0.05:  # Threshold to avoid noise
+            force_type = "TENSION" 
+            force_magnitude = abs(weight_kg)
+            force_magnitude_n = abs(force_n)
+        else:
+            force_type = "NEUTRAL"
+            force_magnitude = 0.0
+            force_magnitude_n = 0.0
+        
+        return {
+            'raw_weight_kg': weight_kg,
+            'raw_force_n': force_n,
+            'force_type': force_type,
+            'magnitude_kg': force_magnitude,
+            'magnitude_n': force_magnitude_n,
+            'compression_kg': weight_kg if weight_kg > 0 else 0.0,
+            'tension_kg': abs(weight_kg) if weight_kg < 0 else 0.0,
+            'compression_n': force_n if force_n > 0 else 0.0,
+            'tension_n': abs(force_n) if force_n < 0 else 0.0
+        }
+    
     def cleanup(self):
         """Clean up GPIO"""
         GPIO.cleanup()
@@ -179,6 +213,7 @@ class LoadCellMonitor:
         """Interactive calibration process"""
         print("=== Load Cell Calibration ===")
         print("This will calibrate your DYMH-103 20kg load cell")
+        print("Note: This load cell can measure both compression (pushing) and tension (pulling)")
         
         # Get known weight for calibration
         while True:
@@ -191,23 +226,72 @@ class LoadCellMonitor:
             except ValueError:
                 print("Please enter a valid number")
         
-        self.hx711.calibrate(cal_weight)
+        print("\nCalibration type:")
+        print("1. Compression calibration (weight pushing down)")
+        print("2. Tension calibration (weight pulling down)")
+        
+        while True:
+            cal_type = input("Select calibration type (1 or 2): ").strip()
+            if cal_type in ['1', '2']:
+                break
+            print("Please enter 1 or 2")
+        
+        # Perform calibration based on type
+        print("\nRemove all weight and press Enter to tare...")
+        input()
+        self.hx711.tare()
+        
+        if cal_type == '1':
+            print(f"Place {cal_weight}kg weight ON TOP (compression) and press Enter...")
+            input()
+            reading = self.hx711.read_average(20)
+            self.hx711.scale = cal_weight / (reading - self.hx711.offset)
+        else:
+            print(f"Hang {cal_weight}kg weight BELOW (tension) and press Enter...")
+            input()
+            reading = self.hx711.read_average(20)
+            # For tension, the reading should be negative, so we make scale negative
+            self.hx711.scale = -cal_weight / (reading - self.hx711.offset)
+        
+        print(f"Calibrated with scale factor: {self.hx711.scale}")
         print("Calibration complete!")
+        
+        # Test both compression and tension
+        print("\n=== Testing Calibration ===")
+        print("Test the calibration:")
+        print("1. Apply compression force (push down)")
+        print("2. Apply tension force (pull down)")  
+        print("3. Remove all force")
+        input("Press Enter when ready to see readings...")
+        
+        for i in range(5):
+            analysis = self.hx711.get_force_analysis(3)
+            print(f"Test {i+1}: {analysis['force_type']} - {analysis['magnitude_kg']:.3f}kg / {analysis['magnitude_n']:.2f}N")
+            time.sleep(1)
     
     def monitor_continuous(self):
-        """Continuously monitor load cell readings"""
-        print("\n=== Continuous Monitoring ===")
+        """Continuously monitor load cell readings with compression/tension analysis"""
+        print("\n=== Continuous Force Monitoring ===")
         print("Press Ctrl+C to stop")
-        print("Weight (kg) | Force (N) | Raw Value")
-        print("-" * 35)
+        print("DYMH-103 Load Cell - Compression (+) / Tension (-)")
+        print("-" * 80)
+        print(f"{'Time':<8} | {'Type':<11} | {'Magnitude':<12} | {'Compression':<12} | {'Tension':<12} | {'Raw':<8}")
+        print(f"{'(s)':<8} | {'':<11} | {'kg / N':<12} | {'kg / N':<12} | {'kg / N':<12} | {'Value':<8}")
+        print("-" * 80)
         
+        start_time = time.time()
         try:
             while True:
-                weight = self.hx711.get_weight()
-                force = self.hx711.get_force_newtons()
-                raw = self.hx711.read()
+                analysis = self.hx711.get_force_analysis(3)
+                current_time = time.time() - start_time
                 
-                print(f"{weight:8.3f}   | {force:7.2f} | {raw:8d}")
+                # Format the display
+                magnitude_str = f"{analysis['magnitude_kg']:.3f} / {analysis['magnitude_n']:.1f}"
+                compression_str = f"{analysis['compression_kg']:.3f} / {analysis['compression_n']:.1f}"
+                tension_str = f"{analysis['tension_kg']:.3f} / {analysis['tension_n']:.1f}"
+                raw_reading = self.hx711.read()
+                
+                print(f"{current_time:8.1f} | {analysis['force_type']:<11} | {magnitude_str:<12} | {compression_str:<12} | {tension_str:<12} | {raw_reading:<8d}")
                 time.sleep(0.5)
                 
         except KeyboardInterrupt:
@@ -215,20 +299,41 @@ class LoadCellMonitor:
         except Exception as e:
             print(f"Error: {e}")
         finally:
-            self.hx711.cleanup()
+            pass  # Cleanup handled by main
     
     def single_reading(self):
-        """Take a single reading"""
-        weight = self.hx711.get_weight(times=10)
-        force = self.hx711.get_force_newtons(times=10)
+        """Take a single comprehensive reading with compression/tension analysis"""
+        print("\n=== Single Force Reading ===")
+        print("Taking measurement...")
+        
+        analysis = self.hx711.get_force_analysis(times=10)
         raw = self.hx711.read_average(10)
         
-        print(f"\nSingle Reading:")
-        print(f"Weight: {weight:.3f} kg")
-        print(f"Force:  {force:.2f} N")
-        print(f"Raw:    {raw:.0f}")
+        print(f"\nDetailed Force Analysis:")
+        print(f"{'='*40}")
+        print(f"Raw sensor value: {raw:.0f}")
+        print(f"Raw weight: {analysis['raw_weight_kg']:+.3f} kg")
+        print(f"Raw force:  {analysis['raw_force_n']:+.2f} N")
+        print(f"")
+        print(f"Force Type: {analysis['force_type']}")
+        print(f"Magnitude:  {analysis['magnitude_kg']:.3f} kg / {analysis['magnitude_n']:.2f} N")
+        print(f"")
+        print(f"Breakdown:")
+        print(f"  Compression: {analysis['compression_kg']:.3f} kg / {analysis['compression_n']:.2f} N")
+        print(f"  Tension:     {analysis['tension_kg']:.3f} kg / {analysis['tension_n']:.2f} N")
         
-        return weight, force, raw
+        # Interpretation
+        print(f"\nInterpretation:")
+        if analysis['force_type'] == 'COMPRESSION':
+            print(f"  → Load cell is being COMPRESSED (pushed/squeezed)")
+            print(f"  → Force magnitude: {analysis['magnitude_kg']:.3f} kg")
+        elif analysis['force_type'] == 'TENSION':
+            print(f"  → Load cell is being stretched in TENSION (pulled)")
+            print(f"  → Force magnitude: {analysis['magnitude_kg']:.3f} kg")
+        else:
+            print(f"  → No significant force detected (within noise threshold)")
+        
+        return analysis
 
 
 def main():
@@ -327,10 +432,16 @@ def main():
         
         # Raw reading test
         try:
-            raw = self.hx711.read()
-            print(f"Raw reading: {raw}")
+            analysis = self.hx711.get_force_analysis(3)
+            print(f"Current reading: {analysis['force_type']} - {analysis['magnitude_kg']:.3f}kg")
+            print(f"Raw value: {self.hx711.read()}")
         except Exception as e:
-            print(f"Raw reading error: {e}")
+            print(f"Reading error: {e}")
+        
+        print(f"\nForce Analysis:")
+        print(f"  Compression threshold: >0.05 kg")
+        print(f"  Tension threshold: <-0.05 kg")
+        print(f"  Neutral zone: ±0.05 kg")
 
 if __name__ == "__main__":
     import os

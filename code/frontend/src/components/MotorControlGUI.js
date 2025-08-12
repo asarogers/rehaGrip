@@ -203,8 +203,6 @@ export default function MotorControlGUI() {
       >
         {/* Left column: Position & Velocity */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Position */}
-          {/* Position */}
           <div
             style={{
               background: "#eff6ff",
@@ -817,6 +815,12 @@ export default function MotorControlGUI() {
                   {emergencyStop ? "ENGAGED" : "Clear"}
                 </span>
               </div>
+
+              {/* Stall Torque spec */}
+              <div>
+                <strong>Stall Torque:</strong> 1.4 N·m @ 11.1 V (~14.3 kg·cm)
+              </div>
+
               <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
                 Last refreshed: {new Date().toLocaleTimeString()}
               </div>

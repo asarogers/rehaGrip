@@ -129,7 +129,7 @@ def main():
     GPIO.setwarnings(True)
 
     try:
-        hx = HX711(dout_pin=args.dout, pd_sck_pin=args.sck)
+        hx = HX711(dout_pin=args.dout, args.sck)
         log("HX711 instance created.")
         try:
             hx.set_reading_format("MSB", "MSB")

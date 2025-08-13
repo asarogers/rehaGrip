@@ -103,8 +103,8 @@ export default function MotorControlGUI() {
       setEmergencyStop(newState);
       addStatusMessage(
         newState
-          ? "🛑 EMERGENCY STOP engaged — motor torque disabled"
-          : "✅ Emergency stop cleared — motor torque enabled"
+          ? "EMERGENCY STOP engaged — motor torque disabled"
+          : "Emergency stop cleared — motor torque enabled"
       );
       // Refresh status
       requestStatus();
@@ -116,14 +116,14 @@ export default function MotorControlGUI() {
     if (!torqueEnabled) return addStatusMessage("Torque disabled");
     if (isLocked) return addStatusMessage("Motor locked");
 
-    addStatusMessage(`🎯 Moving to ${targetPosition}°`);
+    addStatusMessage(`Moving to ${targetPosition}°`);
     try {
       await post("move", {
         position: targetPosition,
         hand: handSelection,
         velocity,
       });
-      addStatusMessage("✅ Move command sent");
+      addStatusMessage("Move command sent");
       requestStatus(); // Always fetch updated status after move
     } catch {}
   };
@@ -138,7 +138,7 @@ export default function MotorControlGUI() {
       setIsLocked(status.locked || false);
       setTorqueEnabled(status.torque !== undefined ? status.torque : true);
       setEmergencyStop(status.emergency || false);
-      addStatusMessage("📊 Status refreshed");
+      addStatusMessage("Status refreshed");
     } catch (err) {}
   };
 
@@ -241,9 +241,9 @@ export default function MotorControlGUI() {
                   try {
                     await post("hand", { hand });
                     requestStatus();
-                    addStatusMessage(`✅ Hand switched to ${hand}.`);
+                    addStatusMessage(`Hand switched to ${hand}.`);
                   } catch (err) {
-                    addStatusMessage("❌ Hand switch failed");
+                    addStatusMessage("Hand switch failed");
                   }
                 }
               }}
@@ -385,7 +385,7 @@ export default function MotorControlGUI() {
                         velocity,
                       })
                         .then(() => {
-                          addStatusMessage(`🎯 Moved to ${newVal}°`);
+                          addStatusMessage(`Moved to ${newVal}°`);
                           requestStatus();
                         })
                         .catch(() => {
@@ -530,7 +530,7 @@ export default function MotorControlGUI() {
                           onClick={async () => {
                             setTargetPosition(preset.pos);
                             addStatusMessage(
-                              `🎯 Preset: Moving to "${preset.name}" (${preset.pos}°)`
+                              `Preset: Moving to "${preset.name}" (${preset.pos}°)`
                             );
                             try {
                               await post("move", {
@@ -538,7 +538,7 @@ export default function MotorControlGUI() {
                                 hand: handSelection,
                                 velocity,
                               });
-                              addStatusMessage("✅ Move command sent");
+                              addStatusMessage("Move command sent");
                               requestStatus();
                             } catch (err) {
                               addStatusMessage("❌ Preset move failed");

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 """
 Load Cell Reader for DYMH-103 with HX711 Amplifier
 Optimized for Raspberry Pi 4 Model B
@@ -43,11 +43,10 @@ class HX711:
             except:
                 time.sleep(0.1)
         
-        # Calibration values (you'll need to determine these)
-        self.offset = 0  # Zero offset (tare value)
-        self.scale = 1   # Scale factor (kg per unit)
         
-        print(f"HX711 initialized on Pi 4 - DOUT: GPIO{dout_pin}, SCK: GPIO{pd_sck_pin}")
+        self.offset = 0  
+        self.scale = 1 
+        
         
     def is_ready(self):
         """Check if HX711 is ready for reading (optimized for Pi 4)"""
@@ -55,14 +54,14 @@ class HX711:
     
     def read(self):
         """Read raw value from HX711 (optimized timing for Pi 4)"""
-        # Wait for HX711 to be ready with timeout
-        timeout = time.time() + 1.0  # 1 second timeout
+
+        timeout = time.time() + 1.0
         while not self.is_ready():
             if time.time() > timeout:
                 raise Exception("HX711 timeout - check connections")
-            time.sleep(0.001)  # Reduced sleep for Pi 4's faster CPU
+            time.sleep(0.001)
         
-        # Read 24-bit value with precise timing for Pi 4
+
         count = 0
         for i in range(24):
             GPIO.output(self.PD_SCK, GPIO.HIGH)

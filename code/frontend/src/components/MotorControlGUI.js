@@ -1,3 +1,54 @@
+/**
+ * MotorControlGUI Component.
+ *
+ * React frontend for the RehaGrip motor control backend.
+ * Provides a complete control panel for a Dynamixel motor via REST API.
+ * Supports position control, velocity adjustment, hand selection, torque/lock toggles,
+ * emergency stop, and editable position presets.
+ *
+ * Key Features:
+ * - Position Control:
+ *   - Move to target angle with slider or numeric input.
+ *   - Incremental moves with ± buttons.
+ *   - Switch between left/right hand orientation.
+ * - Velocity:
+ *   - Adjustable speed (1–100%).
+ * - Presets:
+ *   - Load from backend on mount.
+ *   - Save changes to backend.
+ *   - Edit preset name/position in UI.
+ * - Status:
+ *   - Current position, movement state, hand, load reading.
+ *   - Torque and lock status.
+ *   - Emergency stop state.
+ *   - Range limits and system info.
+ * - Emergency Stop:
+ *   - Toggle E-stop (torque off/on).
+ * - Logging:
+ *   - Time-stamped status messages.
+ *
+ * API Calls:
+ * - GET /api/motor/presets — Load presets.
+ * - POST /api/motor/presets — Save presets.
+ * - POST /api/motor/move — Move to position.
+ * - POST /api/motor/status — Get status.
+ * - POST /api/motor/hand — Switch hand mode.
+ * - POST /api/motor/torque — Enable/disable torque.
+ * - POST /api/motor/emergency — Toggle emergency stop.
+ *
+ * Props: None
+ * State:
+ * - targetPosition, currentPosition, velocity
+ * - isLocked, torqueEnabled, loadReading, isMoving
+ * - emergencyStop, handSelection
+ * - presets, editingPreset, editValues
+ * - statusMessages
+ *
+ * Author:
+ *   Asa Rogers
+ *   Date: 2025-08-13
+ */
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   Play,

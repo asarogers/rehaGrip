@@ -10,7 +10,7 @@
 
 RehaGrip is a lightweight, motor-driven orthotic for hand rehabilitation, designed to help **stroke patients** re-train finger extension movements.  
 A **Dynamixel servo** powers a swing-arm platform that gently opens the user’s fingers with adjustable angles, velocity, and presets.  
-The system now features a **FastAPI backend** and **React-based GUI** for precise, repeatable, and safe motor control.
+The system features a **FastAPI backend** and **React-based GUI** for precise, repeatable, and safe motor control.
 
 ---
 
@@ -41,23 +41,23 @@ The system now features a **FastAPI backend** and **React-based GUI** for precis
 
 ---
 
-## Backend API Endpoints
+## Backend API Endpoints & Examples
 
 **Base URL:** `http://<host>:3001/api/motor`
 
-| Endpoint                   | Method | Description |
-|----------------------------|--------|-------------|
-| `/move`                    | POST   | Move motor to a target position (degrees) with optional velocity. |
-| `/status`                  | GET    | Get current motor state (position, load, movement, torque, etc.). |
-| `/center`                  | POST   | Set current position as the center. |
-| `/recenter`                | POST   | Move to middle of range and set as center. |
-| `/hand`                    | POST   | Switch between left or right hand mode. |
-| `/lock`                    | POST   | Lock or unlock motor movement. |
-| `/torque`                  | POST   | Enable or disable motor torque. |
-| `/emergency`               | POST   | Engage or disengage emergency stop. |
-| `/presets`                 | GET    | Get saved position presets. |
-| `/presets`                 | POST   | Save updated position presets. |
-| `/presets/reload`          | POST   | Reload presets from file. |
+| Endpoint                   | Method | Description | Example Call |
+|----------------------------|--------|-------------|--------------|
+| `/move`                    | POST   | Move motor to a target position (degrees) with optional velocity. | ```bash\ncurl -X POST http://localhost:3001/api/motor/move -H "Content-Type: application/json" -d '{"position": 30, "velocity": 50}'\n``` |
+| `/status`                  | GET    | Get current motor state (position, load, movement, torque, etc.). | ```bash\ncurl http://localhost:3001/api/motor/status\n``` |
+| `/center`                  | POST   | Set current position as the center. | ```bash\ncurl -X POST http://localhost:3001/api/motor/center\n``` |
+| `/recenter`                | POST   | Move to middle of range and set as center. | ```bash\ncurl -X POST http://localhost:3001/api/motor/recenter\n``` |
+| `/hand`                    | POST   | Switch between left or right hand mode. | ```bash\ncurl -X POST http://localhost:3001/api/motor/hand -H "Content-Type: application/json" -d '{"hand": "left"}'\n``` |
+| `/lock`                    | POST   | Lock or unlock motor movement. | ```bash\ncurl -X POST http://localhost:3001/api/motor/lock -H "Content-Type: application/json" -d '{"lock": true}'\n``` |
+| `/torque`                  | POST   | Enable or disable motor torque. | ```bash\ncurl -X POST http://localhost:3001/api/motor/torque -H "Content-Type: application/json" -d '{"enable": false}'\n``` |
+| `/emergency`               | POST   | Engage or disengage emergency stop. | ```bash\ncurl -X POST http://localhost:3001/api/motor/emergency -H "Content-Type: application/json" -d '{"stop": true}'\n``` |
+| `/presets`                 | GET    | Get saved position presets. | ```bash\ncurl http://localhost:3001/api/motor/presets\n``` |
+| `/presets`                 | POST   | Save updated position presets. | ```bash\ncurl -X POST http://localhost:3001/api/motor/presets -H "Content-Type: application/json" -d '[{"name": "Neutral", "pos": 0}]'\n``` |
+| `/presets/reload`          | POST   | Reload presets from file. | ```bash\ncurl -X POST http://localhost:3001/api/motor/presets/reload\n``` |
 
 ---
 
@@ -85,3 +85,19 @@ The Python backend communicates with the motor over USB serial, while the React 
 > - API for research integration.  
 
 ---
+
+## Roadmap
+
+- [x] CAD design & swing-arm mechanism.  
+- [x] Dynamixel motor integration.  
+- [x] Backend API for open/close control.  
+- [x] GUI for live control & presets.  
+- [ ] Finalize thumb holster.  
+- [ ] User testing with therapists.  
+- [ ] Add sensor feedback (future).
+
+---
+
+## Acknowledgements
+
+Thanks to **Ana Maria Acosta** and **Ahalya Mandana** for mentorship and clinical guidance.

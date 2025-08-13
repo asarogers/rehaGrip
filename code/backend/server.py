@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import time
 import uvicorn
+import json
+import os
+from typing import List, Dict
 from dynamixel_sdk import *
 
 app = FastAPI()
@@ -21,6 +24,14 @@ ADDR_PRESENT_POSITION = 132
 ADDR_PROFILE_ACCELERATION = 108
 ADDR_PROFILE_VELOCITY = 112
 
+# ----- Preset storage constants -----
+PRESET_FILE = "/home/pi/motor_presets.json"
+DEFAULT_PRESETS = [
+    {"name": "Neutral", "pos": 0},
+    {"name": "Open", "pos": 45},
+    {"name": "Closed", "pos": -45}
+]
+
 # ----- Motor state class -----
 class State:
     def __init__(self):
@@ -35,6 +46,57 @@ class State:
         self.hand = "right"
 
 state = State()
+
+# ----- Preset management functions -----
+def load_presets_from_file():
+    """Load presets from nonvolatile storage, or return defaults if file doesn't exist."""
+    try:
+        if os.path.exists(PRESET_FILE):
+            with open(PRESET_FILE, 'r') as f:
+                data = json.load(f)
+                presets = data.get('presets', DEFAULT_PRESETS)
+                print(f"✓ Loaded {len(presets)} presets from {PRESET_FILE}")
+                return presets
+        else:
+            print(f"⚠ Preset file {PRESET_FILE} not found, using defaults")
+            return DEFAULT_PRESETS.copy()
+    except Exception as e:
+        print(f"❌ Error loading presets: {e}, using defaults")
+        return DEFAULT_PRESETS.copy()
+
+def save_presets_to_file(presets):
+    """Save presets to nonvolatile storage."""
+    try:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(PRESET_FILE), exist_ok=True)
+        
+        # Validate and clamp preset values
+        validated_presets = []
+        for preset in presets:
+            validated_preset = {
+                "name": str(preset.get("name", "Unnamed")).strip(),
+                "pos": max(-60, min(60, float(preset.get("pos", 0))))  # Clamp to valid range
+            }
+            validated_presets.append(validated_preset)
+        
+        # Save to file
+        data = {
+            "presets": validated_presets,
+            "last_updated": time.time(),
+            "version": "1.0"
+        }
+        
+        with open(PRESET_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
+        
+        print(f"✓ Saved {len(validated_presets)} presets to {PRESET_FILE}")
+        return True
+    except Exception as e:
+        print(f"❌ Error saving presets: {e}")
+        return False
+
+# Load presets on startup
+current_presets = load_presets_from_file()
 
 # ----- Connect to hardware -----
 portHandler = PortHandler(PORT_NAME)
@@ -78,6 +140,7 @@ print("Setting up default startup position (right hand, centered)...")
 center_tick = move_to_tick_if_needed(RIGHT_CENTER_TICK, velocity=50)
 state.hand = "right"
 print(f"Startup: hand={state.hand}, center_tick={center_tick}")
+print(f"Loaded presets: {current_presets}")
 
 # ----- CORS -----
 app.add_middleware(
@@ -109,6 +172,13 @@ class EmergencyRequest(BaseModel):
 class HandRequest(BaseModel):
     hand: str
 
+class PresetData(BaseModel):
+    name: str
+    pos: float
+
+class PresetsRequest(BaseModel):
+    presets: List[PresetData]
+
 # ----- Helper functions -----
 def get_current_tick():
     tick, _, _ = packetHandler.read4ByteTxRx(portHandler, DXL_ID, ADDR_PRESENT_POSITION)
@@ -137,6 +207,72 @@ async def motor_status():
         "torque": state.torque,
         "emergency": state.emergency
     }
+
+@app.get("/api/motor/presets")
+async def get_presets():
+    """Get current presets from memory."""
+    return {
+        "ok": True,
+        "presets": current_presets,
+        "preset_file": PRESET_FILE,
+        "count": len(current_presets)
+    }
+
+@app.post("/api/motor/presets")
+async def save_presets(req: PresetsRequest):
+    """Save presets to nonvolatile storage and update memory."""
+    global current_presets
+    
+    try:
+        # Convert Pydantic models to dicts
+        new_presets = [{"name": p.name, "pos": p.pos} for p in req.presets]
+        
+        # Save to file
+        success = save_presets_to_file(new_presets)
+        
+        if success:
+            # Update memory only if file save succeeded
+            current_presets = new_presets
+            print(f"✓ Presets updated in memory and saved to disk")
+            return {
+                "ok": True, 
+                "message": "Presets saved successfully",
+                "presets": current_presets,
+                "saved_to_file": True
+            }
+        else:
+            return {
+                "ok": False, 
+                "error": "Failed to save presets to file",
+                "saved_to_file": False
+            }
+    except Exception as e:
+        print(f"❌ Error in save_presets endpoint: {e}")
+        return {
+            "ok": False, 
+            "error": f"Server error: {str(e)}",
+            "saved_to_file": False
+        }
+
+@app.post("/api/motor/presets/reload")
+async def reload_presets():
+    """Reload presets from nonvolatile storage."""
+    global current_presets
+    
+    try:
+        current_presets = load_presets_from_file()
+        return {
+            "ok": True,
+            "message": "Presets reloaded from file",
+            "presets": current_presets,
+            "count": len(current_presets)
+        }
+    except Exception as e:
+        print(f"❌ Error reloading presets: {e}")
+        return {
+            "ok": False,
+            "error": f"Failed to reload presets: {str(e)}"
+        }
 
 @app.post("/api/motor/move")
 async def motor_move(req: MoveRequest):
@@ -229,18 +365,17 @@ async def set_hand(req: HandRequest):
 
     print(f"Switching hand to {new_hand}")
 
-
     if new_hand == "right":
         center_tick = RIGHT_CENTER_TICK
     else:
         center_tick = LEFT_CENTER_TICK
-
 
     packetHandler.write4ByteTxRx(portHandler, DXL_ID, ADDR_GOAL_POSITION, center_tick)
     wait_until_arrived(center_tick)  
 
     state.hand = new_hand
     return {"ok": True, "hand": new_hand, "center_tick": center_tick}
+
 @app.post("/api/motor/lock")
 async def set_lock(req: LockRequest):
     print(f"Setting lock: {req.locked}")
@@ -273,4 +408,6 @@ async def emergency_stop(req: EmergencyRequest):
 if __name__ == "__main__":
     print(f"Starting server on port {PORT}")
     print(f"Motor center position: {center_tick}")
+    print(f"Preset storage file: {PRESET_FILE}")
+    print(f"Loaded {len(current_presets)} presets from storage")
     uvicorn.run(app, host="0.0.0.0", port=PORT)

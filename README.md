@@ -4,40 +4,68 @@
 **GitHub:** [github.com/asarogers/rehaGrip](https://github.com/asarogers/rehaGrip)  
 **CAD Model:** [Onshape Link](https://cad.onshape.com/documents/70b0fc4719f91c87f4f5c56d/w/a0b7ff8eeb91e3fab313c6a8/e/38638431a9837a5ab3d1f154)  
 
-
 ---
 
 ## Overview
 
-**RehaGrip** is a lightweight, motor-driven orthotic device for hand rehabilitation, specifically designed to help **stroke patients** re-train finger extension movements. The system uses a swing-arm platform actuated by a Dynamixel servo motor to gently and precisely open the user's fingers using adjustable extension angles.
-
-Unlike earlier versions of this device, **RehaGrip no longer uses inflatable bladders**—it has transitioned to a more robust, motorized mechanical design.
+RehaGrip is a lightweight, motor-driven orthotic for hand rehabilitation, designed to help **stroke patients** re-train finger extension movements.  
+A **Dynamixel servo** powers a swing-arm platform that gently opens the user’s fingers with adjustable angles, velocity, and presets.  
+The system now features a **FastAPI backend** and **React-based GUI** for precise, repeatable, and safe motor control.
 
 ---
 
 ## Core Features
 
-- **Dynamic finger extension** using a high-torque servo motor  
-- **Open-source API** to adjust motor position and extension levels  
-- **Swing-arm linkage** designed for consistent and safe finger movement  
-- **Customizable CAD parts** for different hand sizes and setups  
-- **Ergonomic platform** that is easy to wear and remove, even with a clenched hand  
+- **Motor Control**
+  - Move to a target angle in degrees with optional velocity control.
+  - Set and recenter the middle position.
+  - Switch between **left-hand** and **right-hand** mode.
+  - Enable/disable torque for free rotation.
+  - Lock motor via software to prevent accidental movement.
+- **State Tracking**
+  - Get position (ticks & degrees), load, movement state, torque, and emergency status.
+  - Display movement limits based on current center.
+- **Presets**
+  - Save, load, and reload position presets from JSON.
+  - Built-in default presets for quick setup.
+- **Emergency Handling**
+  - Emergency stop for instant torque cutoff.
+  - Resume operation after clearing emergency state.
+- **React GUI**
+  - Live motor status updates.
+  - Preset editing and saving.
+  - Incremental position control buttons.
+  - Velocity slider.
+  - Emergency stop toggle.
+  - Hand mode switching.
 
 ---
 
-## Current Prototype
+## Backend API Endpoints
 
-![RehaGrip CAD Model](https://cad.onshape.com/documents/70b0fc4719f91c87f4f5c56d/w/a0b7ff8eeb91e3fab313c6a8/e/38638431a9837a5ab3d1f154)
+**Base URL:** `http://<host>:3001/api/motor`
 
-*CAD model showing swing-arm actuation directly linked to the motor horn*
+| Endpoint                   | Method | Description |
+|----------------------------|--------|-------------|
+| `/move`                    | POST   | Move motor to a target position (degrees) with optional velocity. |
+| `/status`                  | GET    | Get current motor state (position, load, movement, torque, etc.). |
+| `/center`                  | POST   | Set current position as the center. |
+| `/recenter`                | POST   | Move to middle of range and set as center. |
+| `/hand`                    | POST   | Switch between left or right hand mode. |
+| `/lock`                    | POST   | Lock or unlock motor movement. |
+| `/torque`                  | POST   | Enable or disable motor torque. |
+| `/emergency`               | POST   | Engage or disengage emergency stop. |
+| `/presets`                 | GET    | Get saved position presets. |
+| `/presets`                 | POST   | Save updated position presets. |
+| `/presets/reload`          | POST   | Reload presets from file. |
 
 ---
 
 ## How It Works
 
-RehaGrip uses a Dynamixel XL430-W250-T servo motor to control a **mechanical swing arm**. This arm rotates to lift a lightweight platform, gently extending the fingers of a user whose hand rests on top.
-
-The motor is controlled via USB serial communication using a Python-based API. You can send position commands to increase or decrease the rotation angle based on therapy requirements.
+RehaGrip uses a **Dynamixel XL430-W250-T servo** to control a swing arm that lifts the hand platform.  
+All motion is handled in **current-based position control mode** for smooth, safe operation.  
+The Python backend communicates with the motor over USB serial, while the React GUI interacts with the backend via REST API calls.
 
 ---
 
@@ -48,28 +76,12 @@ The motor is controlled via USB serial communication using a Python-based API. Y
 > **Mentors:** Ahalya Mandana & Dr. Ana Maria Acosta  
 >  
 > **Objectives:**  
-> - Create a lightweight orthotic that applies finger extension forces via actuators  
-> - Ensure actuators are mounted away from the hand for reduced weight  
-> - Allow voluntary finger flexion and thumb pinch  
-> - Design for comfort, easy donning/doffing, and customizability  
+> - Apply finger extension forces with minimal weight on the hand.  
+> - Allow voluntary finger flexion and thumb pinch.  
+> - Prioritize comfort, easy donning/doffing, and modularity.  
 >  
 > **Deliverables:**  
-> - Fully functional prototype  
-> - Optional Python-based API for future research use
+> - Functional motorized prototype.  
+> - API for research integration.  
 
 ---
-
-## Roadmap
-
-- [x] Validate swing-arm mechanism with CAD  
-- [x] Integrate Dynamixel motor  
-- [x] Create open/close API  
-- [ ] Finalize thumb holster  
-- [ ] Conduct user-centered testing with therapists  
-- [ ] Add sensor feedback (optional future milestone)
-
----
-
-## Acknowledgements
-
-Special thanks to Ana Maria Acosta and Ahalya Mandana at NUPTHMS for guiding this project and enabling its clinical relevance.

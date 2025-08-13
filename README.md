@@ -89,17 +89,35 @@ LEFT_CENTER_TICK = 1000       # Left hand center position
 
 ---
 
-## Backend API Endpoints & Examples
+# RehaGrip API Documentation
 
 **Base URL:** `http://localhost:3001/api/motor`
 
-### Motor Movement
+## Endpoint Overview
 
-#### Move to Position
-Move motor to a specific angle with optional velocity control.
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/move` | Move motor to specific position |
+| POST | `/status` | Get current motor status |
+| POST | `/hand` | Switch hand orientation (left/right) |
+| POST | `/emergency` | Emergency stop/resume |
+| POST | `/torque` | Enable/disable motor torque |
+| POST | `/lock` | Software lock/unlock motor |
+| POST | `/center` | Set current position as center |
+| POST | `/recenter` | Move to mid-range and set new center |
+| GET | `/presets` | Get all saved presets |
+| POST | `/presets` | Save/update presets |
+| POST | `/presets/reload` | Reload presets from storage |
 
-**POST** `/move`
+---
 
+## Complete Usage Examples
+
+### 1. Move Motor to Position
+
+**Purpose:** Move motor to a specific angle with optional velocity control.
+
+**Terminal (curl):**
 ```bash
 curl -X POST http://localhost:3001/api/motor/move \
   -H "Content-Type: application/json" \
@@ -110,69 +128,95 @@ curl -X POST http://localhost:3001/api/motor/move \
   }'
 ```
 
-**Request Parameters:**
-- `position`: Target angle in degrees (-60 to 60)
-- `velocity`: Optional movement speed (1-100, default: 50)
-- `hand`: Optional hand orientation ("left" or "right")
+**Python:**
+```python
+import requests
 
-**Response:**
-```json
-{
-  "ok": true,
-  "position": 29.8,
-  "position_tick": 3180,
-  "target_tick": 3184,
-  "requested_degrees": 30.0
+url = "http://localhost:3001/api/motor/move"
+data = {
+    "position": 30.0,
+    "velocity": 75,
+    "hand": "right"
 }
+
+response = requests.post(url, json=data)
+result = response.json()
+print(f"Motor moved to {result['position']}° (tick: {result['position_tick']})")
 ```
 
-### Motor Status
+---
 
-#### Get Current Status
-Retrieve comprehensive motor state information.
+### 2. Get Motor Status
 
-**POST** `/status`
+**Purpose:** Retrieve comprehensive motor state information.
 
+**Terminal (curl):**
 ```bash
 curl -X POST http://localhost:3001/api/motor/status
 ```
 
-**Response:**
-```json
-{
-  "position": 29.8,
-  "position_tick": 3180,
-  "center_tick": 3046,
-  "load": 0.25,
-  "moving": false,
-  "locked": false,
-  "torque": true,
-  "emergency": false
-}
+**Python:**
+```python
+import requests
+
+url = "http://localhost:3001/api/motor/status"
+response = requests.post(url)
+status = response.json()
+
+print(f"Position: {status['position']}°")
+print(f"Load: {status['load']}N")
+print(f"Moving: {status['moving']}")
+print(f"Emergency: {status['emergency']}")
+print(f"Locked: {status['locked']}")
+print(f"Torque Enabled: {status['torque']}")
 ```
 
-### Hand Orientation
+---
 
-#### Switch Hand Mode
-Configure motor for left or right hand operation.
+### 3. Switch Hand Orientation
 
-**POST** `/hand`
+**Purpose:** Configure motor for left or right hand operation.
 
+**Terminal (curl):**
 ```bash
+# Switch to left hand
 curl -X POST http://localhost:3001/api/motor/hand \
   -H "Content-Type: application/json" \
   -d '{"hand": "left"}'
+
+# Switch to right hand  
+curl -X POST http://localhost:3001/api/motor/hand \
+  -H "Content-Type: application/json" \
+  -d '{"hand": "right"}'
 ```
 
-### Safety Controls
+**Python:**
+```python
+import requests
 
-#### Emergency Stop
-Immediately disable torque and halt all movement.
+def set_hand_orientation(hand_side):
+    url = "http://localhost:3001/api/motor/hand"
+    data = {"hand": hand_side}
+    
+    response = requests.post(url, json=data)
+    result = response.json()
+    print(f"Hand orientation set to: {hand_side}")
+    return result
 
-**POST** `/emergency`
+# Usage
+set_hand_orientation("left")
+set_hand_orientation("right")
+```
 
+---
+
+### 4. Emergency Stop/Resume
+
+**Purpose:** Immediately disable torque and halt all movement, or resume operation.
+
+**Terminal (curl):**
 ```bash
-# Engage emergency stop
+# Emergency stop
 curl -X POST http://localhost:3001/api/motor/emergency \
   -H "Content-Type: application/json" \
   -d '{"stop": true, "hand": "right"}'
@@ -183,87 +227,189 @@ curl -X POST http://localhost:3001/api/motor/emergency \
   -d '{"stop": false, "hand": "right"}'
 ```
 
-#### Torque Control
-Enable or disable motor holding torque.
+**Python:**
+```python
+import requests
 
-**POST** `/torque`
+def emergency_control(stop=True, hand="right"):
+    url = "http://localhost:3001/api/motor/emergency"
+    data = {"stop": stop, "hand": hand}
+    
+    response = requests.post(url, json=data)
+    action = "STOPPED" if stop else "RESUMED"
+    print(f"Emergency {action} for {hand} hand")
+    return response.json()
 
+# Usage
+emergency_control(stop=True)   # Emergency stop
+emergency_control(stop=False)  # Resume
+```
+
+---
+
+### 5. Torque Control
+
+**Purpose:** Enable or disable motor holding torque.
+
+**Terminal (curl):**
 ```bash
+# Disable torque (free rotation)
 curl -X POST http://localhost:3001/api/motor/torque \
   -H "Content-Type: application/json" \
   -d '{"torque": false, "hand": "right"}'
+
+# Enable torque (position holding)
+curl -X POST http://localhost:3001/api/motor/torque \
+  -H "Content-Type: application/json" \
+  -d '{"torque": true, "hand": "right"}'
 ```
 
-#### Software Lock
-Prevent movement through software control.
+**Python:**
+```python
+import requests
 
-**POST** `/lock`
+def set_torque(enabled=True, hand="right"):
+    url = "http://localhost:3001/api/motor/torque"
+    data = {"torque": enabled, "hand": hand}
+    
+    response = requests.post(url, json=data)
+    state = "enabled" if enabled else "disabled"
+    print(f"Torque {state} for {hand} hand")
+    return response.json()
 
+# Usage
+set_torque(False)  # Allow free rotation
+set_torque(True)   # Hold position
+```
+
+---
+
+### 6. Software Lock
+
+**Purpose:** Prevent movement through software control.
+
+**Terminal (curl):**
 ```bash
+# Lock motor (prevent movement)
 curl -X POST http://localhost:3001/api/motor/lock \
   -H "Content-Type: application/json" \
   -d '{"locked": true, "hand": "right"}'
+
+# Unlock motor
+curl -X POST http://localhost:3001/api/motor/lock \
+  -H "Content-Type: application/json" \
+  -d '{"locked": false, "hand": "right"}'
 ```
 
-### Position Calibration
+**Python:**
+```python
+import requests
 
-#### Set Center Position
-Define current position as the neutral (0°) reference.
+def set_motor_lock(locked=True, hand="right"):
+    url = "http://localhost:3001/api/motor/lock"
+    data = {"locked": locked, "hand": hand}
+    
+    response = requests.post(url, json=data)
+    state = "locked" if locked else "unlocked"
+    print(f"Motor {state} for {hand} hand")
+    return response.json()
 
-**POST** `/center`
+# Usage
+set_motor_lock(True)   # Lock motor
+set_motor_lock(False)  # Unlock motor
+```
 
+---
+
+### 7. Set Center Position
+
+**Purpose:** Define current position as the neutral (0°) reference.
+
+**Terminal (curl):**
 ```bash
 curl -X POST http://localhost:3001/api/motor/center
 ```
 
-#### Recenter Motor
-Move to mid-range and establish new center point.
+**Python:**
+```python
+import requests
 
-**POST** `/recenter`
+def set_center_position():
+    url = "http://localhost:3001/api/motor/center"
+    response = requests.post(url)
+    result = response.json()
+    print("Current position set as new center (0°)")
+    return result
 
+# Usage
+set_center_position()
+```
+
+---
+
+### 8. Recenter Motor
+
+**Purpose:** Move to mid-range and establish new center point.
+
+**Terminal (curl):**
 ```bash
 curl -X POST http://localhost:3001/api/motor/recenter
 ```
 
-**Response:**
-```json
-{
-  "ok": true,
-  "center_tick": 2048,
-  "available_range_degrees": 360
-}
+**Python:**
+```python
+import requests
+
+def recenter_motor():
+    url = "http://localhost:3001/api/motor/recenter"
+    response = requests.post(url)
+    result = response.json()
+    
+    print(f"Motor recentered at tick {result['center_tick']}")
+    print(f"Available range: {result['available_range_degrees']}°")
+    return result
+
+# Usage
+recenter_motor()
 ```
 
-### Preset Management
+---
 
-#### Get Presets
-Retrieve all saved position presets.
+### 9. Get Presets
 
-**GET** `/presets`
+**Purpose:** Retrieve all saved position presets.
 
+**Terminal (curl):**
 ```bash
 curl -X GET http://localhost:3001/api/motor/presets
 ```
 
-**Response:**
-```json
-{
-  "ok": true,
-  "presets": [
-    {"name": "Neutral", "pos": 0},
-    {"name": "Open", "pos": 45},
-    {"name": "Closed", "pos": -45}
-  ],
-  "preset_file": "/home/user/.local/state/rehagrip/motor_presets.json",
-  "count": 3
-}
+**Python:**
+```python
+import requests
+
+def get_presets():
+    url = "http://localhost:3001/api/motor/presets"
+    response = requests.get(url)
+    result = response.json()
+    
+    print(f"Found {result['count']} presets:")
+    for preset in result['presets']:
+        print(f"  - {preset['name']}: {preset['pos']}°")
+    
+    return result
+
+# Usage
+presets = get_presets()
 ```
 
-#### Save Presets
-Update position presets with validation and persistence.
+---
 
-**POST** `/presets`
+### 10. Save/Update Presets
 
+**Purpose:** Update position presets with validation and persistence.
+
+**Terminal (curl):**
 ```bash
 curl -X POST http://localhost:3001/api/motor/presets \
   -H "Content-Type: application/json" \
@@ -277,83 +423,184 @@ curl -X POST http://localhost:3001/api/motor/presets \
   }'
 ```
 
-#### Reload Presets
-Refresh presets from storage without restart.
+**Python:**
+```python
+import requests
 
-**POST** `/presets/reload`
+def save_presets(preset_list):
+    url = "http://localhost:3001/api/motor/presets"
+    data = {"presets": preset_list}
+    
+    response = requests.post(url, json=data)
+    result = response.json()
+    print(f"Saved {len(preset_list)} presets")
+    return result
 
-```bash
-curl -X POST http://localhost:3001/api/motor/presets/reload
+# Usage
+therapy_presets = [
+    {"name": "Rest", "pos": 0},
+    {"name": "Therapy Start", "pos": 15}, 
+    {"name": "Full Extension", "pos": 45},
+    {"name": "Gentle Flex", "pos": -20}
+]
+
+save_presets(therapy_presets)
 ```
 
 ---
 
-## Usage Examples
+### 11. Reload Presets
 
-### Basic Rehabilitation Session
+**Purpose:** Refresh presets from storage without restart.
 
+**Terminal (curl):**
 ```bash
-# 1. Check system status
-curl -X POST http://localhost:3001/api/motor/status
-
-# 2. Ensure proper hand configuration
-curl -X POST http://localhost:3001/api/motor/hand \
-  -H "Content-Type: application/json" \
-  -d '{"hand": "right"}'
-
-# 3. Start with neutral position
-curl -X POST http://localhost:3001/api/motor/move \
-  -H "Content-Type: application/json" \
-  -d '{"position": 0, "velocity": 30}'
-
-# 4. Gentle extension movement
-curl -X POST http://localhost:3001/api/motor/move \
-  -H "Content-Type: application/json" \
-  -d '{"position": 25, "velocity": 20}'
-
-# 5. Return to neutral
-curl -X POST http://localhost:3001/api/motor/move \
-  -H "Content-Type: application/json" \
-  -d '{"position": 0, "velocity": 25}'
+curl -X POST http://localhost:3001/api/motor/presets/reload
 ```
 
-### Emergency Procedures
+**Python:**
+```python
+import requests
 
-```bash
-# Immediate stop (use in emergency)
-curl -X POST http://localhost:3001/api/motor/emergency \
-  -H "Content-Type: application/json" \
-  -d '{"stop": true}'
+def reload_presets():
+    url = "http://localhost:3001/api/motor/presets/reload"
+    response = requests.post(url)
+    result = response.json()
+    print("Presets reloaded from storage")
+    return result
 
-# System recovery
-curl -X POST http://localhost:3001/api/motor/emergency \
-  -H "Content-Type: application/json" \
-  -d '{"stop": false}'
-
-# Verify safe operation
-curl -X POST http://localhost:3001/api/motor/status
+# Usage
+reload_presets()
 ```
 
-### Preset-Based Therapy
+---
 
-```bash
-# Create therapy-specific presets
-curl -X POST http://localhost:3001/api/motor/presets \
-  -H "Content-Type: application/json" \
-  -d '{
-    "presets": [
-      {"name": "Patient Rest", "pos": -5},
-      {"name": "Gentle Stretch", "pos": 20},
-      {"name": "Active Extension", "pos": 40},
-      {"name": "Return Position", "pos": 0}
-    ]
-  }'
+## Complete Python Class Example
 
-# Use preset for consistent therapy
-curl -X POST http://localhost:3001/api/motor/move \
-  -H "Content-Type: application/json" \
-  -d '{"position": 20, "velocity": 15}'  # Gentle Stretch position
+Here's a comprehensive Python class that wraps all the API endpoints:
+
+```python
+import requests
+import time
+from typing import List, Dict, Optional
+
+class RehaGripController:
+    def __init__(self, base_url="http://localhost:3001/api/motor"):
+        self.base_url = base_url
+    
+    def move_to_position(self, position: float, velocity: int = 50, hand: str = "right") -> Dict:
+        """Move motor to specific angle"""
+        url = f"{self.base_url}/move"
+        data = {"position": position, "velocity": velocity, "hand": hand}
+        response = requests.post(url, json=data)
+        return response.json()
+    
+    def get_status(self) -> Dict:
+        """Get current motor status"""
+        url = f"{self.base_url}/status"
+        response = requests.post(url)
+        return response.json()
+    
+    def set_hand_orientation(self, hand: str) -> Dict:
+        """Set hand orientation (left/right)"""
+        url = f"{self.base_url}/hand"
+        data = {"hand": hand}
+        response = requests.post(url, json=data)
+        return response.json()
+    
+    def emergency_stop(self, stop: bool = True, hand: str = "right") -> Dict:
+        """Emergency stop or resume"""
+        url = f"{self.base_url}/emergency"
+        data = {"stop": stop, "hand": hand}
+        response = requests.post(url, json=data)
+        return response.json()
+    
+    def set_torque(self, enabled: bool, hand: str = "right") -> Dict:
+        """Enable/disable torque"""
+        url = f"{self.base_url}/torque"
+        data = {"torque": enabled, "hand": hand}
+        response = requests.post(url, json=data)
+        return response.json()
+    
+    def set_lock(self, locked: bool, hand: str = "right") -> Dict:
+        """Software lock/unlock motor"""
+        url = f"{self.base_url}/lock"
+        data = {"locked": locked, "hand": hand}
+        response = requests.post(url, json=data)
+        return response.json()
+    
+    def set_center(self) -> Dict:
+        """Set current position as center"""
+        url = f"{self.base_url}/center"
+        response = requests.post(url)
+        return response.json()
+    
+    def recenter(self) -> Dict:
+        """Move to mid-range and set new center"""
+        url = f"{self.base_url}/recenter"
+        response = requests.post(url)
+        return response.json()
+    
+    def get_presets(self) -> Dict:
+        """Get all saved presets"""
+        url = f"{self.base_url}/presets"
+        response = requests.get(url)
+        return response.json()
+    
+    def save_presets(self, presets: List[Dict]) -> Dict:
+        """Save preset list"""
+        url = f"{self.base_url}/presets"
+        data = {"presets": presets}
+        response = requests.post(url, json=data)
+        return response.json()
+    
+    def reload_presets(self) -> Dict:
+        """Reload presets from storage"""
+        url = f"{self.base_url}/presets/reload"
+        response = requests.post(url)
+        return response.json()
+    
+    # Convenience methods
+    def run_therapy_sequence(self, positions: List[float], velocity: int = 30, hold_time: float = 2.0):
+        """Run a sequence of positions with specified hold times"""
+        for pos in positions:
+            print(f"Moving to {pos}°...")
+            self.move_to_position(pos, velocity)
+            time.sleep(hold_time)
+            
+            # Check status after each move
+            status = self.get_status()
+            print(f"Current position: {status['position']}°, Load: {status['load']}N")
+    
+    def safe_shutdown(self):
+        """Safely return to center and disable torque"""
+        print("Initiating safe shutdown...")
+        self.move_to_position(0, velocity=25)  # Return to center
+        time.sleep(3)
+        self.set_torque(False)  # Disable torque
+        print("Safe shutdown complete")
+
+# Usage example
+if __name__ == "__main__":
+    # Initialize controller
+    reha = RehaGripController()
+    
+    # Check initial status
+    status = reha.get_status()
+    print(f"Initial position: {status['position']}°")
+    
+    # Set hand orientation
+    reha.set_hand_orientation("right")
+    
+    # Run a simple therapy sequence
+    therapy_positions = [0, 15, 30, 15, 0, -15, 0]
+    reha.run_therapy_sequence(therapy_positions, velocity=25, hold_time=3.0)
+    
+    # Safe shutdown
+    reha.safe_shutdown()
 ```
+
+This documentation provides both the basic endpoint list you requested and comprehensive examples for both terminal and Python usage, making it easy to integrate RehaGrip into research applications or clinical workflows.
 
 ---
 

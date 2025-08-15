@@ -17,3 +17,5 @@ RPi.GPIO
 # Hardware control
 dynamixel-sdk==3.7.31
 pyserial==3.5
+pyyaml
+lark

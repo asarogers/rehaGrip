@@ -627,16 +627,6 @@ RehaGrip uses a **Dynamixel XL430-W250-T servo** connected to a swing-arm mechan
 - `PRESET_FILE`: Custom path for preset storage (optional)
 - `XDG_STATE_HOME`: State directory for preset storage (default: `~/.local/state`)
 
-### File Structure
-```
-rehagrip/
-├── motor_control_api.py          # FastAPI backend server
-├── motor_control_gui.jsx         # React frontend component  
-├── README.md                     # This documentation
-└── ~/.local/state/rehagrip/
-    └── motor_presets.json        # Persistent preset storage
-```
-
 ---
 
 ## Troubleshooting

@@ -68,13 +68,13 @@ pip install fastapi uvicorn dynamixel-sdk pydantic pathlib
 Update these constants in `motor_control_api.py` for your setup:
 
 ```python
-PORT_NAME = '/dev/ttyUSB0'    # Serial port device
-BAUDRATE = 57600              # Communication speed
-DXL_ID = 1                    # Motor ID (default: 1)
-PROTOCOL_VERSION = 2.0        # Dynamixel protocol version
+PORT_NAME = '/dev/ttyUSB0'   
+BAUDRATE = 57600              
+DXL_ID = 1                   
+PROTOCOL_VERSION = 2.0      
 
-RIGHT_CENTER_TICK = 3046      # Right hand center position
-LEFT_CENTER_TICK = 1000       # Left hand center position
+RIGHT_CENTER_TICK = 3046     
+LEFT_CENTER_TICK = 1000      
 ```
 
 ### Quick Start
@@ -241,8 +241,8 @@ def emergency_control(stop=True, hand="right"):
     return response.json()
 
 # Usage
-emergency_control(stop=True)   # Emergency stop
-emergency_control(stop=False)  # Resume
+emergency_control(stop=True)  
+emergency_control(stop=False)  
 ```
 
 ---
@@ -278,8 +278,8 @@ def set_torque(enabled=True, hand="right"):
     return response.json()
 
 # Usage
-set_torque(False)  # Allow free rotation
-set_torque(True)   # Hold position
+set_torque(False) 
+set_torque(True)    
 ```
 
 ---

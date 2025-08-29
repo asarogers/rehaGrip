@@ -718,6 +718,23 @@ curl -X GET http://localhost:3001/api/motor/presets
 
 ---
 
+## Acknowledgements
+
+This project was developed as part of research at **Northwestern University** in collaboration with the **Department of Physical Therapy and Human Movement Sciences**.  
+
+Special thanks to:  
+- **Prof. Matt Elwin** — for his faculty guidance and support throughout the project.  
+- **Dr. Ana Maria Acosta** — for her mentorship, clinical insight, and guidance in aligning RehaGrip with real-world rehabilitation needs.  
+- **Ahalya Mandana** — for her mentorship and design feedback during the prototyping process.  
+- **Faculty and peers at Northwestern MSR** — for their continued support and constructive feedback during development.  
+
+Their expertise and encouragement were invaluable in shaping RehaGrip into a practical, patient-focused rehabilitation device.  
+
+---
+
+
+---
+
 ## 🧾 Project Proposal
 
 > **Title:** Development of a Hand Orthotic Device for Stroke Research  

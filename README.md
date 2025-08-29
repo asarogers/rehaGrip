@@ -87,16 +87,6 @@ RIGHT_CENTER_TICK = 3046
 LEFT_CENTER_TICK = 1000      
 ```
 
-### Quick Start
-
-1. **Connect Hardware**: Ensure Dynamixel motor is connected via USB
-2. **Start Backend**:
-   ```bash
-   python motor_control_api.py
-   ```
-   Server starts on `http://localhost:3001`
-3. **Launch Frontend**: Deploy the React component in your preferred environment
-
 
 ## System Architecture
 

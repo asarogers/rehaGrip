@@ -11,7 +11,11 @@ cd rehaGrip/
 **Created by:** Asa Rogers  
 **Date:** August 13, 2025  
 **Portfolio Post:** [Post](https://www.aethurtech.com/portfolio/projectCard/9)
-**CAD Model:** [View on Onshape](https://cad.onshape.com/documents/.../public-share-link)
+<iframe width="640" height="480"
+  src="https://cad.onshape.com/documents/<ID>/w/<workspace>/e/<element>/embed?view=default"
+  allowfullscreen>
+</iframe>
+
 
 
 ---

@@ -1,13 +1,25 @@
 #!/bin/bash
 
-# Exit on error
+# escape on error
 set -e
 
-# Activate Python virtual environment
+# create venv if it doesn't exist
+if [ ! -d "code/myenv" ]; then
+  python3 -m venv code/myenv
+fi
+
+# activate Python virtual environment
 source code/myenv/bin/activate
 
-# Move into frontend folder
+# install/confirm Python dependencies
+pip install --upgrade pip
+pip install -r code/requirements.txt
+
+# get local IP address
+IP_ADDRESS=$(hostname -I | awk '{print $1}')
+
+# move into frontend folder
 cd code/frontend
 
-# Start frontend
+# start frontend + backend
 npm start

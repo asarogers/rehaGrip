@@ -1,0 +1,74 @@
+.
+├── code
+│   ├── backend
+│   │   ├── MotorApiTest.m
+│   │   ├── motor.py
+│   │   └── server.py
+│   ├── frontend
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   ├── public
+│   │   │   ├── favicon.ico
+│   │   │   ├── index.html
+│   │   │   ├── logo192.png
+│   │   │   ├── logo512.png
+│   │   │   ├── manifest.json
+│   │   │   └── robots.txt
+│   │   ├── README.md
+│   │   └── src
+│   │       ├── App.css
+│   │       ├── App.js
+│   │       ├── App.test.js
+│   │       ├── components
+│   │       │   └── MotorControlGUI.js
+│   │       ├── index.css
+│   │       ├── index.js
+│   │       ├── logo.svg
+│   │       ├── reportWebVitals.js
+│   │       └── setupTests.js
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── read_loadcell.py
+│   ├── rehaGrip.py
+│   ├── requirements.txt
+│   ├── start.sh
+│   └── tailwind-app
+│       ├── eslint.config.js
+│       ├── index.html
+│       ├── package.json
+│       ├── package-lock.json
+│       ├── postcss.config.js
+│       ├── public
+│       │   └── vite.svg
+│       ├── README.md
+│       ├── src
+│       │   ├── App.css
+│       │   ├── App.jsx
+│       │   ├── assets
+│       │   │   └── react.svg
+│       │   ├── components
+│       │   │   └── MotorControlGUI.tsx
+│       │   ├── index.css
+│       │   └── main.jsx
+│       ├── tailwind.config.js
+│       └── vite.config.js
+├── dymh-103-inline-load-cell-1.snapshot.2
+│   ├── 1.png
+│   ├── DYMH-103 Inline Load Cell.step
+│   └── DYMH-103 Inline Load Cell.stl
+├── dymh-103-load-cell-1.snapshot.4
+│   ├── Load_Cell v8.f3d
+│   ├── Load_Cell v8.png
+│   ├── Load_Cell v8.step
+│   └── Renderings
+│       └── Load_Cell Drawing v1.pdf
+├── filetree.txt
+├── journal
+│   └── week5.txt
+├── package.json
+├── package-lock.json
+├── README.md
+├── requirement.txt
+└── start.sh
+
+16 directories, 56 files

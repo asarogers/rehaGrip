@@ -1,11 +1,21 @@
 # RehaGrip – Motorized Hand Orthotic for Stroke Rehabilitation
 
+## 🚀 TL;DR Quick Start
+The easiest way to start everything is:
+
+```bash
+cd rehaGrip/
+./start.sh
+```
+
 **Created by:** Asa Rogers  
 **Date:** August 13, 2025  
 **GitHub:** [github.com/asarogers/rehaGrip](https://github.com/asarogers/rehaGrip)  
 **CAD Model:** [Onshape Link](https://cad.onshape.com/documents/70b0fc4719f91c87f4f5c56d/w/a0b7ff8eeb91e3fab313c6a8/e/38638431a9837a5ab3d1f154)  
 
 ---
+
+
 
 ## Overview
 

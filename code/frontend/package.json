@@ -18,14 +18,17 @@
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
- "scripts": {
+"scripts": {
   "start:frontend": "react-scripts start",
   "start:backend": "cd ../backend && uvicorn server:app --reload --host 0.0.0.0 --port 3001",
-  "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+  "show-ip": "node -e \"const os=require('os');const nets=os.networkInterfaces();let ip='';for(const name of Object.keys(nets)){for(const net of nets[name]){if(net.family==='IPv4'&&!net.internal){ip=net.address}}}console.log('\\n============================================================');console.log('     READY — YOUR LOCAL IP IS: '+ip);console.log('     FRONTEND: http://'+ip+':3000');console.log('     BACKEND:  http://'+ip+':3001');console.log('============================================================\\n');\"",
+  "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\" \"sleep 5 && npm run show-ip\"",
   "build": "react-scripts build",
   "test": "react-scripts test",
   "eject": "react-scripts eject"
-},
+}
+
+,
   "eslintConfig": {
     "extends": [
       "react-app",

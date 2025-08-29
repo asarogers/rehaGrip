@@ -97,6 +97,27 @@ LEFT_CENTER_TICK = 1000
    Server starts on `http://localhost:3001`
 3. **Launch Frontend**: Deploy the React component in your preferred environment
 
+
+## System Architecture
+
+The system works as a **request–response pipeline**:
+
+1. The **Frontend (React GUI)** sends API requests when a user interacts with the controls.  
+2. The **Backend (FastAPI, Python)** receives those requests and translates them into motor commands.  
+3. The **U2D2 USB-to-Serial controller** relays commands to the **power board + Dynamixel motor**.  
+4. The motor executes the movement and sends **feedback data** back through the U2D2 → Backend.  
+5. The **Backend** processes the data and returns it to the **Frontend**, which displays live status to the user.  
+
+This can run on:
+- A **Raspberry Pi** on the local network, accessible by other devices.  
+- A **Laptop/Desktop** directly connected to the U2D2.  
+
+### Diagram
+
+<img width="600" alt="RehaGrip System Diagram" src="https://github.com/user-attachments/assets/39e265be-30e9-4472-b9a5-bdfe468f2b52" />
+
+
+
 ---
 
 # RehaGrip API Documentation

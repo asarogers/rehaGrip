@@ -84,6 +84,50 @@ This can run on:
 
 ---
 
+---
+
+## Design Decisions
+
+RehaGrip was designed with both **mechanical flexibility** and **software modularity** in mind.  
+Below are some of the key choices:
+
+### Hardware Design
+- **Dual-Hand Compatibility**  
+  - The same orthotic device can be used for **both left and right hands**.  
+  - A simple toggle in the GUI automatically remaps the motor orientation.  
+
+- **Thumb Holster Adjustability**  
+  - The thumb holster can be positioned **up or down** a few slots.  
+  - It can also be mounted **inside or outside** the frame to maximize comfort and fit.  
+
+- **Swing Arm Surface Comfort**  
+  - Modular attachments can be added to the swing arm to improve **hand support**.  
+  - This allows therapists to adjust padding, surface curvature, and grip feel for different patients.  
+
+### Software / Code Design
+- **API-Centric Approach**  
+  - All motor control functions are exposed via a **FastAPI backend**.  
+  - This makes the system scriptable and integrable with other rehab platforms or research tools.  
+
+- **Frontend–Backend Separation**  
+  - The **React GUI** is decoupled from the motor logic.  
+  - Any client (web, mobile, Python scripts) can interact with the backend via HTTP.  
+
+- **Preset System with Persistence**  
+  - Presets are stored in **JSON files** under the user’s state directory.  
+  - They can be updated live without restarting the system, supporting rapid clinical workflow changes.  
+
+- **Safety-First Control**  
+  - Emergency stop, torque disable, and range limits are handled in the **backend layer**.  
+  - Ensures that even if the frontend crashes, core safety is enforced.  
+
+- **Cross-Device Deployment**  
+  - The codebase runs seamlessly on a **Raspberry Pi** (portable, networked) or on a **laptop/desktop** (development, research).  
+  - In both cases, the same request → response pipeline is used, ensuring consistency.  
+
+---
+
+
 ## Installation & Setup
 
 ### Backend Dependencies

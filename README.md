@@ -1,6 +1,6 @@
 # RehaGrip – Motorized Hand Orthotic for Stroke Rehabilitation
 
-## 🚀 TL;DR Quick Start
+##  TL;DR Quick Start
 The easiest way to start everything is:
 
 ```bash

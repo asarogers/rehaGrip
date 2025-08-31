@@ -141,7 +141,7 @@ export default function MotorControlGUI() {
       if (!res.ok) throw new Error(await res.text());
       return await res.json();
     } catch (err) {
-      addStatusMessage(`❌ ${path} error: ${err.message}`);
+      addStatusMessage(`${path} error: ${err.message}`);
       console.error(path, err);
       throw err;
     }
@@ -440,7 +440,7 @@ export default function MotorControlGUI() {
                           requestStatus();
                         })
                         .catch(() => {
-                          addStatusMessage("❌ Increment move failed");
+                          addStatusMessage("Increment move failed");
                         });
                       return newVal;
                     });
@@ -592,7 +592,7 @@ export default function MotorControlGUI() {
                               addStatusMessage("Move command sent");
                               requestStatus();
                             } catch (err) {
-                              addStatusMessage("❌ Preset move failed");
+                              addStatusMessage("Preset move failed");
                             }
                           }}
                           style={{
@@ -893,7 +893,7 @@ export default function MotorControlGUI() {
                         });
                         requestStatus();
                       } catch {
-                        addStatusMessage("❌ Torque toggle failed");
+                        addStatusMessage("Torque toggle failed");
                       }
                     }}
                     style={{ accentColor: "#2563eb", width: 16, height: 16 }}

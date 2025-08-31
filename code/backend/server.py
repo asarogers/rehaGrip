@@ -136,7 +136,7 @@ def load_presets_from_file():
             print(f"⚠ Preset file {p} not found, using defaults")
             return DEFAULT_PRESETS.copy()
     except Exception as e:
-        print(f"❌ Error loading presets: {e}, using defaults")
+        print(f"Error loading presets: {e}, using defaults")
         return DEFAULT_PRESETS.copy()
 
 def save_presets_to_file(presets):
@@ -159,7 +159,7 @@ def save_presets_to_file(presets):
         print(f"✓ Saved {len(validated_presets)} presets to {p}")
         return True
     except Exception as e:
-        print(f"❌ Error saving presets: {e}")
+        print(f"Error saving presets: {e}")
         return False
 
 
@@ -292,21 +292,19 @@ async def save_presets(req: PresetsRequest):
     global current_presets
     
     try:
-        # Convert Pydantic models to dicts
         new_presets = [{"name": p.name, "pos": p.pos} for p in req.presets]
         
-        # Validate presets structure
         for preset in new_presets:
             if not isinstance(preset.get("name"), str) or not preset["name"].strip():
                 raise HTTPException(status_code=422, detail="Each preset must have a non-empty name")
             if not isinstance(preset.get("pos"), (int, float)):
                 raise HTTPException(status_code=422, detail="Each preset must have a numeric position")
         
-        # Save to file
+        # save to file
         success = save_presets_to_file(new_presets)
         
         if success:
-            # Update memory only if file save succeeded
+            # update memory only if file save succeeded
             current_presets = load_presets_from_file()  # Reload to get clamped values
             print(f"✓ Presets updated in memory and saved to disk")
             return {
@@ -321,7 +319,7 @@ async def save_presets(req: PresetsRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Error in save_presets endpoint: {e}")
+        print(f"Error in save_presets endpoint: {e}")
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 @app.post("/api/motor/presets/reload")
@@ -338,7 +336,7 @@ async def reload_presets():
             "count": len(current_presets)
         }
     except Exception as e:
-        print(f"❌ Error reloading presets: {e}")
+        print(f"Error reloading presets: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to reload presets: {str(e)}")
 
 @app.post("/api/motor/move")
